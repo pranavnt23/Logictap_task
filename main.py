@@ -35,6 +35,12 @@ class CallRecord(BaseModel):
         return value.strip()
 
 
+class CallResponse(BaseModel):
+    """Response model for POST /call-ended endpoint."""
+    message: str = Field(..., description="Status message indicating processing result")
+    record: CallRecord = Field(..., description="The stored call record")
+
+
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     """
@@ -85,22 +91,27 @@ async def root():
     }
 
 
-@app.post("/call-ended", response_model=CallRecord, status_code=status.HTTP_200_OK, tags=["Calls"])
+@app.post("/call-ended", response_model=CallResponse, status_code=status.HTTP_200_OK, tags=["Calls"])
 async def record_call_ended(record: CallRecord):
     """
     Record an ended call event.
 
     - Stores the call record in memory.
-    - If the same call_id is submitted again, does not create a second record
-      and returns the existing record with a successful response.
+    - For an already existing call_id, does not create or overwrite a record and returns
+      HTTP 200 with an explicit message indicating the call was already processed.
     - A request without call_id is rejected with a clear error message.
     """
-    # Idempotent check: return existing record if call_id is already present
     if record.call_id in call_records:
-        return call_records[record.call_id]
+        return CallResponse(
+            message="Call record already processed.",
+            record=call_records[record.call_id],
+        )
 
     call_records[record.call_id] = record
-    return record
+    return CallResponse(
+        message="Call record stored successfully.",
+        record=record,
+    )
 
 
 @app.get("/calls/{call_id}", response_model=CallRecord, tags=["Calls"])

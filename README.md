@@ -85,9 +85,12 @@ curl -X POST "http://127.0.0.1:8000/call-ended" \
 **Response (HTTP 200 OK):**
 ```json
 {
-  "call_id": "abc123",
-  "status": "answered",
-  "duration_secs": 42
+  "message": "Call record stored successfully.",
+  "record": {
+    "call_id": "abc123",
+    "status": "answered",
+    "duration_secs": 42
+  }
 }
 ```
 
@@ -112,7 +115,7 @@ curl -X GET "http://127.0.0.1:8000/calls/abc123"
 
 ### 3. Duplicate Call Submission (`POST /call-ended`)
 
-If submitted again with the same `call_id`, no duplicate record is created and the server returns the existing record successfully:
+If submitted again with the same `call_id`, no duplicate record is created and the server returns the existing record with an explicit message:
 
 ```bash
 curl -X POST "http://127.0.0.1:8000/call-ended" \
@@ -123,9 +126,12 @@ curl -X POST "http://127.0.0.1:8000/call-ended" \
 **Response (HTTP 200 OK):**
 ```json
 {
-  "call_id": "abc123",
-  "status": "answered",
-  "duration_secs": 42
+  "message": "Call record already processed.",
+  "record": {
+    "call_id": "abc123",
+    "status": "answered",
+    "duration_secs": 42
+  }
 }
 ```
 
